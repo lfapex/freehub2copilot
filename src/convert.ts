@@ -74,6 +74,13 @@ export function convertToChatRequest(
 	const tools = convertTools(options.tools);
 	const toolChoice = convertToolChoice(options);
 
+	const modelOptions = (options as { modelOptions?: Record<string, unknown> }).modelOptions ?? {};
+	const effort = typeof modelOptions.reasoningEffort === 'string'
+		? modelOptions.reasoningEffort
+		: typeof modelOptions.reasoning_effort === 'string'
+			? modelOptions.reasoning_effort
+			: model.effortDefault;
+
 	return {
 		model: model.id,
 		messages: out,
@@ -81,6 +88,7 @@ export function convertToChatRequest(
 		stream_options: { include_usage: true },
 		...(tools ? { tools } : {}),
 		...(toolChoice ? { tool_choice: toolChoice } : {}),
+		...(typeof effort === 'string' && effort !== '' ? { reasoning_effort: effort } : {}),
 	};
 }
 

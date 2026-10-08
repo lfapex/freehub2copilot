@@ -4,6 +4,7 @@ import path from 'node:path';
 import vscode from 'vscode';
 
 import { convertToChatRequest } from './convert';
+import { ensureDaemon } from './daemon';
 import { log } from './log';
 import { HubSettings } from './settings';
 import type { HubModel } from './types';
@@ -41,6 +42,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	const refresh = async (force = false): Promise<void> => {
 		try {
+			await ensureDaemon();
 			const models = await fetchModelList(HubSettings.endpoint(), force);
 			const changed = JSON.stringify(models) !== JSON.stringify(state.models);
 			state.models = models;
@@ -124,7 +126,7 @@ function toChatInfo(model: HubModel): PickerInfo {
 		family: 'free-model-hub',
 		version: '1.0.0',
 		detail: `free · via free-model-hub`,
-		tooltip: `${model.id} — served by the free-model-hub daemon`,
+		tooltip: `${model.id} — served by the free-model-hub daemon${model.efforts?.length ? ` · efforts ${model.efforts.join('/')}` : ''}`,
 		maxInputTokens: model.contextWindow ?? 131_072,
 		maxOutputTokens: model.maxOutput ?? 32_768,
 		isBYOK: true,
@@ -138,11 +140,21 @@ function toChatInfo(model: HubModel): PickerInfo {
 
 // ── the hub client ───────────────────────────────────────────────────────────
 
-async function fetchModelList(endpoint: { baseUrl: string; key: string }, force = false): Promise<HubModel[]> {
+async function fetchModelList(endpoint: { baseUrl: string; key: string }, _force = false): Promise<HubModel[]> {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), 15000);
 	timer.unref?.();
 	try {
+		const hubModels = await fetch(`${endpoint.baseUrl}/hub-models`, {
+			headers: hubHeaders(endpoint.key),
+			cache: 'no-store',
+			signal: controller.signal,
+		});
+		if (hubModels.ok) {
+			const payload = (await hubModels.json()) as { models?: Array<Record<string, unknown>> };
+			return (payload.models ?? []).map(rowToHubModel).filter((model) => model.id !== '');
+		}
+		if (hubModels.status === 401) throw new Error('the hub rejected the API key (settings: freehub.apiKey, or the hub data directory moved)');
 		const response = await fetch(`${endpoint.baseUrl}/v1/models`, {
 			headers: hubHeaders(endpoint.key),
 			cache: 'no-store',
@@ -151,16 +163,23 @@ async function fetchModelList(endpoint: { baseUrl: string; key: string }, force 
 		if (response.status === 401) throw new Error('the hub rejected the API key (settings: freehub.apiKey, or the hub data directory moved)');
 		if (!response.ok) throw new Error(`HTTP ${response.status}`);
 		const payload = (await response.json()) as { data?: Array<Record<string, unknown>> };
-		return (payload.data ?? []).map((row) => ({
-			id: String(row.id ?? ''),
-			name: typeof row.name === 'string' ? row.name : undefined,
-			contextWindow: typeof row.context_window === 'number' ? row.context_window : undefined,
-			maxOutput: typeof row.max_output === 'number' ? row.max_output : undefined,
-			vision: row.vision === true,
-		})).filter((model) => model.id !== '');
+		return (payload.data ?? []).map(rowToHubModel).filter((model) => model.id !== '');
 	} finally {
 		clearTimeout(timer);
 	}
+}
+
+function rowToHubModel(row: Record<string, unknown>): HubModel {
+	const efforts = Array.isArray(row.efforts) ? row.efforts.filter((value): value is string => typeof value === 'string') : undefined;
+	return {
+		id: String(row.id ?? ''),
+		name: typeof row.name === 'string' ? row.name : undefined,
+		contextWindow: typeof row.context_window === 'number' ? row.context_window : typeof row.contextWindow === 'number' ? row.contextWindow : undefined,
+		maxOutput: typeof row.max_output === 'number' ? row.max_output : typeof row.maxOutput === 'number' ? row.maxOutput : undefined,
+		vision: row.vision === true,
+		efforts: efforts && efforts.length > 0 ? efforts : undefined,
+		effortDefault: typeof row.effort_default === 'string' ? row.effort_default : typeof row.effortDefault === 'string' ? row.effortDefault : undefined,
+	};
 }
 
 /** Authorization header for the hub; a missing key means a missing hub install. */

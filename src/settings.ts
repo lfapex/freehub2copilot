@@ -10,6 +10,16 @@ import vscode from 'vscode';
 class HubSettingsReader {
 	#cache: { baseUrl: string; key: string; at: number } | undefined;
 
+	invalidate(): void {
+		this.#cache = undefined;
+	}
+
+	/** True when the key is auto-read from the hub data dir (zero-config). */
+	keyFromFile(): boolean {
+		const configured = String(vscode.workspace.getConfiguration('freehub').get('apiKey') ?? '').trim();
+		return configured === '';
+	}
+
 	/** Endpoint for API calls; the key auto-resolves from the hub data dir. */
 	endpoint(): { baseUrl: string; key: string } {
 		// Short cache: the config event already fires on change, this only

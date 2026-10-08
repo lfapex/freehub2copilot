@@ -45,8 +45,9 @@ On the machine that runs the hub the extension needs **no settings at all**:
 - the catalog re-reads every 5 minutes (`freehub.refreshSeconds`), so a
   channel login or a relay edit on the hub's settings page flows into the
   picker without touching VS Code;
-- a down daemon keeps the last roster instead of emptying the picker, with
-  one warning naming the cause.
+- a down daemon is started from PATH (`free-model-hub`) on the zero-config
+  host; the key is re-read after first boot mints it. If it still cannot
+  come up, the last roster is kept instead of emptying the picker.
 
 Settings exist for the remote-hub case: `freehub.baseUrl` / `freehub.apiKey`.
 
@@ -70,7 +71,7 @@ panel ([microsoft/vscode#337742](https://github.com/microsoft/vscode/issues/3377
 ```sh
 npm run smoke      # headless tests: key resolution, message conversion
 npm run compile
-npm run package    # -> dist/freehub2copilot-<ver>.vsix
+npm run package    # -> dist/freehub2copilot-0.1.0.vsix
 ```
 
 ## Notes

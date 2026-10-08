@@ -8,6 +8,8 @@ export interface HubModel {
 	contextWindow?: number;
 	maxOutput?: number;
 	vision?: boolean;
+	efforts?: string[];
+	effortDefault?: string;
 }
 
 // ── OpenAI chat-completions wire format (hub ⇄ upstream) ─────────────────────

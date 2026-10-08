@@ -83,7 +83,7 @@
     "clean": "node -e \"require('node:fs').rmSync('out', { recursive: true, force: true })\"",
     "compile": "npm run clean && tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "",
+    "package": "npm run compile && node -e \"require('node:fs').mkdirSync('dist',{recursive:true})\" && vsce package --out dist/freehub2copilot-0.1.0.vsix",
     "smoke": "node --test scripts/smoke.test.mjs"
   },
   "devDependencies": {
