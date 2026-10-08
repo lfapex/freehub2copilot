@@ -1,0 +1,95 @@
+{
+  "name": "freehub2copilot",
+  "displayName": "Free Model Hub for Copilot",
+  "description": "The free-model-hub daemon's roster — free lane, Kilo, 13 account channels, your relays — directly in Copilot Chat as a BYOK provider. Zero configuration on the machine that runs the hub.",
+  "version": "0.1.0",
+  "publisher": "lfapex",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lfapex/freehub2copilot"
+  },
+  "engines": {
+    "vscode": "^1.116.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "copilot",
+    "github copilot",
+    "free models",
+    "byok",
+    "free-model-hub",
+    "language model",
+    "ai"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "enabledApiProposals": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languageModelChatProviders": [
+      {
+        "vendor": "freehub",
+        "displayName": "Free Model Hub (Free)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "freehub.showStatus",
+        "title": "Free Model Hub: Show Connection Status"
+      },
+      {
+        "command": "freehub.refreshModels",
+        "title": "Free Model Hub: Refresh Model Catalog"
+      },
+      {
+        "command": "freehub.showLogs",
+        "title": "Free Model Hub: Show Logs"
+      }
+    ],
+    "configuration": {
+      "title": "Free Model Hub for Copilot",
+      "properties": {
+        "freehub.baseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8330",
+          "description": "The hub's OpenAI-compatible base URL. The default serves the local daemon; change it only when the hub runs on another machine."
+        },
+        "freehub.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "The hub's server key. Leave empty to auto-read it from the local hub's data directory (~/.free-model-hub/hub/settings.json) — zero configuration on the machine that runs the hub."
+        },
+        "freehub.refreshSeconds": {
+          "type": "number",
+          "default": 300,
+          "description": "How often the model catalog is re-read from the hub (channels logging in, relays added — all flow through)."
+        },
+        "freehub.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Verbose logging (Output: Free Model Hub for Copilot)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('out', { recursive: true, force: true })\"",
+    "compile": "npm run clean && tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "",
+    "smoke": "node --test scripts/smoke.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.116.0",
+    "@vscode/vsce": "^3.9.1",
+    "typescript": "^5.9.2"
+  }
+}
