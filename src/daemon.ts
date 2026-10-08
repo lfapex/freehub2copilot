@@ -3,12 +3,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { hubRequest } from './http';
 import { log } from './log';
 import { HubSettings } from './settings';
 
 const START_TIMEOUT_MS = 30_000;
+const ALIVE_TTL_MS = 60_000;
 
 let starting = false;
+let lastAliveAt = 0;
 
 export function isLocalHub(baseUrl: string): boolean {
 	try {
@@ -33,11 +36,17 @@ function readHubKeyFromDataDir(): string {
 async function probe(baseUrl: string, key: string): Promise<boolean> {
 	if (key === '') return false;
 	try {
-		const response = await fetch(`${baseUrl}/hub-models`, {
-			headers: { authorization: `Bearer ${key}` },
-			signal: AbortSignal.timeout(3000),
+		const response = await hubRequest(`${baseUrl}/hub-models`, {
+			headers: { authorization: `Bearer ${key}`, accept: 'application/json' },
+			timeoutMs: 800,
+			signal: AbortSignal.timeout(800),
 		});
-		return response.ok;
+		response.stream.resume();
+		if (response.status >= 200 && response.status < 300) {
+			lastAliveAt = Date.now();
+			return true;
+		}
+		return false;
 	} catch {
 		return false;
 	}
@@ -57,12 +66,11 @@ export async function ensureDaemon(): Promise<void> {
 	if (HubSettings.keyFromFile() !== true) return;
 	const baseUrl = HubSettings.baseUrl();
 	if (!isLocalHub(baseUrl)) return;
-	HubSettings.invalidate();
+	if (lastAliveAt > 0 && Date.now() - lastAliveAt < ALIVE_TTL_MS) return;
 	if (await probe(baseUrl, HubSettings.endpoint().key)) return;
 	if (starting) {
 		for (let waited = 0; waited < START_TIMEOUT_MS; waited += 500) {
 			await sleep(500);
-			HubSettings.invalidate();
 			if (await probe(baseUrl, HubSettings.endpoint().key)) return;
 		}
 		throw new Error('the hub daemon did not come up in time');
@@ -84,7 +92,6 @@ export async function ensureDaemon(): Promise<void> {
 		log.info('daemon', 'hub not running — starting free-model-hub from PATH (detached)');
 		for (let waited = 0; waited < START_TIMEOUT_MS; waited += 500) {
 			await sleep(500);
-			HubSettings.invalidate();
 			const key = readHubKeyFromDataDir() || HubSettings.endpoint().key;
 			if (await probe(baseUrl, key)) {
 				log.info('daemon', 'hub daemon is up');
@@ -97,4 +104,8 @@ export async function ensureDaemon(): Promise<void> {
 	} finally {
 		starting = false;
 	}
+}
+
+export function markHubAlive(): void {
+	lastAliveAt = Date.now();
 }

@@ -34,10 +34,27 @@
   "main": "./out/extension.js",
   "contributes": {
     "languageModelChatProviders": [
-      {
-        "vendor": "freehub",
-        "displayName": "Free Model Hub (Free)"
-      }
+      { "vendor": "freehub-free", "displayName": "Our Free Model" },
+      { "vendor": "freehub-region", "displayName": "Our Free Model · region-limited" },
+      { "vendor": "freehub-kilo", "displayName": "Kilo" },
+      { "vendor": "freehub-atomcode", "displayName": "AtomCode" },
+      { "vendor": "freehub-codearts", "displayName": "CodeArts Agent" },
+      { "vendor": "freehub-buddy", "displayName": "CodeBuddy (腾讯)" },
+      { "vendor": "freehub-workbuddy", "displayName": "WorkBuddy (国际版)" },
+      { "vendor": "freehub-lobsterai", "displayName": "LobsterAI (有道)" },
+      { "vendor": "freehub-qoder", "displayName": "Qoder" },
+      { "vendor": "freehub-qodercn", "displayName": "Qoder (中国版)" },
+      { "vendor": "freehub-trae", "displayName": "TRAE (字节)" },
+      { "vendor": "freehub-cline", "displayName": "Cline" },
+      { "vendor": "freehub-loomy", "displayName": "Loomy (讯飞)" },
+      { "vendor": "freehub-raccoon", "displayName": "Raccoon (商汤)" },
+      { "vendor": "freehub-minimax", "displayName": "MiniMax Code" },
+      { "vendor": "freehub-zcode", "displayName": "ZCode (智谱)" },
+      { "vendor": "freehub-opencode", "displayName": "OpenCode" },
+      { "vendor": "freehub-gemini", "displayName": "Gemini Code Assist" },
+      { "vendor": "freehub-relay", "displayName": "Relay" },
+      { "vendor": "freehub-virtual", "displayName": "Virtual" },
+      { "vendor": "freehub", "displayName": "Free Model Hub" }
     ],
     "commands": [
       {

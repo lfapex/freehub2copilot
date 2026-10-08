@@ -5,9 +5,11 @@
 A VS Code BYOK extension in the mechanism of
 [anyfree2copilot](https://github.com/lfapex/anyfree2copilot):
 `vscode.lm.registerLanguageModelChatProvider` plugs into the same provider API
-Copilot Chat itself uses, so the hub's whole roster appears as one picker
-section — **Free Model Hub (Free)** — with agent mode, tool calling, MCP and
-everything else Copilot gives you. No custom-endpoint form to fill, no proxy
+Copilot Chat itself uses, so the hub's roster is grouped the way
+[dsh-our-free-model](https://github.com/Ebony-Vinyl/dsh-our-free-model) groups
+it — **Our Free Model**, **Kilo**, **CodeArts Agent**, **ZCode (智谱)**,
+**TRAE (字节)**, … — with the same human-facing model names (no `provider/`
+routing prefix). Agent mode, tool calling and MCP still come from Copilot. No custom-endpoint form to fill, no proxy
 process per client: the hub daemon is the only server, this extension is one
 of its clients (the other being [freehub2dsh](https://github.com/lfapex/freehub2dsh) for dsh).
 
@@ -32,8 +34,9 @@ npm install && npm run compile && npm run package
 code --install-extension dist/freehub2copilot-0.1.0.vsix
 ```
 
-Open Copilot Chat, click the model picker, pick models from the
-**Free Model Hub (Free)** section.
+Open Copilot Chat, click the model picker. Models appear under their platform
+section (**Our Free Model**, **Kilo**, **CodeArts Agent**, …), with the same
+display names dsh-our-free-model uses.
 
 ## Zero configuration
 

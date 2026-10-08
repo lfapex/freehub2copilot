@@ -49,6 +49,43 @@ test('readHubKeyFromDataDir degrades to empty on missing/corrupt files', () => {
   fs.rmSync(home, { recursive: true, force: true })
 })
 
+test('platformOf groups models the way dsh-our-free-model does', async () => {
+  const { platformOf, displayNameOf, sortByPlatform, isPickerVisible, canonicalAtomcodeId, dedupeVisible } = await import('../out/platforms.js')
+  assert.equal(platformOf({ id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' }).label, 'Our Free Model')
+  assert.equal(platformOf({ id: 'mimo-v2.6-flash-free' }).vendor, 'freehub-free')
+  assert.equal(platformOf({ id: 'muse-spark-1.3-contributor-free', regionSensitive: true }).label, 'Our Free Model')
+  assert.equal(platformOf({ id: 'muse-spark-1.3-contributor-free', state: 'region-blocked' }).label, 'Our Free Model · region-limited')
+  assert.equal(isPickerVisible({ id: 'mimo-v2.6-flash-free' }), true)
+  assert.equal(isPickerVisible({ id: 'gone', state: 'unavailable' }), false)
+  assert.equal(isPickerVisible({ id: 'gone', state: '不可用' }), false)
+  assert.equal(isPickerVisible({ id: 'muse', state: 'region-blocked' }), false)
+  assert.equal(isPickerVisible({ id: 'dead', routable: false }), false)
+  assert.equal(platformOf({ id: 'nvidia/nemotron-3-ultra:free', channel: 'kilo' }).label, 'Kilo')
+  assert.equal(platformOf({ id: 'nvidia/nemotron-3-ultra:free', channel: 'kilo' }).vendor, 'freehub-kilo')
+  assert.equal(platformOf({ id: 'zcode/GLM-5.3', channel: 'chan', provider: 'zcode' }).label, 'ZCode (智谱)')
+  assert.equal(platformOf({ id: 'trae/kimi-k3', ownedBy: 'chan:trae' }).label, 'TRAE (字节)')
+  assert.equal(platformOf({ id: 'atomcode/glm-4.6', channel: 'atomcode' }).label, 'AtomCode')
+  assert.equal(canonicalAtomcodeId('atomcode/AtomGit-qwen3.8-27b'), 'qwen3.8-27b')
+  const atom = dedupeVisible([
+    { id: 'atomcode/qwen3.8-27b', channel: 'atomcode', name: 'qwen3.8-27b' },
+    { id: 'atomcode/AtomGit-qwen3.8-27b', channel: 'atomcode', name: 'AtomGit-qwen3.8-27b' },
+  ])
+  assert.equal(atom.length, 1)
+  assert.equal(displayNameOf({ id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' }), 'MiMo V2.6 Flash')
+  assert.equal(displayNameOf({ id: 'mimo-v2.6-flash-free' }), 'MiMo V2.6 Flash')
+  assert.equal(displayNameOf({ id: 'codearts/deepseek-v4-flash', channel: 'chan', provider: 'codearts', name: 'deepseek-v4-flash' }), 'Deepseek V4 Flash')
+  assert.equal(displayNameOf({ id: 'zcode/GLM-5.3', channel: 'chan', provider: 'zcode', name: 'GLM 5.3' }), 'GLM 5.3')
+  assert.equal(displayNameOf({ id: 'nvidia/nemotron-3-ultra:free', channel: 'kilo', name: 'NVIDIA: Nemotron 3 Ultra (free)' }), 'Kilo Nemotron 3 Ultra')
+  const sorted = sortByPlatform([
+    { id: 'zcode/GLM-5.3', channel: 'chan', provider: 'zcode', name: 'GLM 5.3' },
+    { id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' },
+    { id: 'nvidia/nemotron:free', channel: 'kilo', name: 'Kilo Nemotron' },
+  ])
+  assert.equal(sorted[0].id, 'mimo-v2.6-flash-free')
+  assert.equal(sorted[1].id, 'nvidia/nemotron:free')
+  assert.equal(sorted[2].id, 'zcode/GLM-5.3')
+})
+
 test('convertToChatRequest maps roles, tools and tool results (with vscode shimmed)', async () => {
   const { convertToChatRequest } = await import('../out/convert.js')
   const { LanguageModelTextPart, LanguageModelToolCallPart, LanguageModelToolResultPart, LanguageModelChatMessageRole } = require(vscodeShimPath)

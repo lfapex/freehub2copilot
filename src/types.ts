@@ -10,6 +10,17 @@ export interface HubModel {
 	vision?: boolean;
 	efforts?: string[];
 	effortDefault?: string;
+	/** Hub lane: `free` / `kilo` / `chan` / `relay` / `atomcode` / `virtual`. */
+	channel?: string;
+	/** Account-channel provider id (`zcode`, `trae`, …) when `channel === 'chan'`. */
+	provider?: string;
+	/** Same tag `/v1/models` advertises (`free-lane`, `kilo`, `chan:zcode`, …). */
+	ownedBy?: string;
+	regionSensitive?: boolean;
+	/** Probe verdict from the hub: available / unknown / unavailable / region-blocked / throttled. */
+	state?: string;
+	/** False when the hub has already ruled this id out of the picker. */
+	routable?: boolean;
 }
 
 // ── OpenAI chat-completions wire format (hub ⇄ upstream) ─────────────────────
