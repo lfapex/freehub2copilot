@@ -1,6 +1,6 @@
 /**
  * Picker grouping aligned with dsh-our-free-model: one Copilot vendor per
- * platform (Our Free Model / Kilo / ZCode / TRAE / …). Copilot Chat groups
+ * platform (OpenCode / Kilo / ZCode / TRAE / …). Copilot Chat groups
  * strictly by `languageModelChatProviders.vendor`, so a single "Free Model
  * Hub" vendor would dump the whole roster into one section.
  */
@@ -21,8 +21,8 @@ export interface PickerVendor {
 
 /** Must stay in sync with `contributes.languageModelChatProviders` in package.json. */
 export const PICKER_VENDORS: readonly PickerVendor[] = [
-	{ vendor: 'freehub-free', displayName: 'Our Free Model' },
-	{ vendor: 'freehub-region', displayName: 'Our Free Model · region-limited' },
+	{ vendor: 'freehub-free', displayName: 'OpenCode' },
+	{ vendor: 'freehub-region', displayName: 'OpenCode · region-limited' },
 	{ vendor: 'freehub-kilo', displayName: 'Kilo' },
 	{ vendor: 'freehub-atomcode', displayName: 'AtomCode' },
 	{ vendor: 'freehub-codearts', displayName: 'CodeArts Agent' },
@@ -105,9 +105,9 @@ export function platformOf(model: HubModel): Platform {
 	}
 
 	if (model.state === 'region-blocked' || model.state === 'regionBlocked') {
-		return { key: 'region', vendor: 'freehub-region', label: 'Our Free Model · region-limited', order: 20 };
+		return { key: 'region', vendor: 'freehub-region', label: 'OpenCode · region-limited', order: 20 };
 	}
-	return { key: 'free', vendor: 'freehub-free', label: 'Our Free Model', order: 10 };
+	return { key: 'free', vendor: 'freehub-free', label: 'OpenCode', order: 10 };
 }
 
 const HIDDEN_STATES = new Set(['unavailable', 'region-blocked', 'regionblocked', '不可用']);
@@ -153,63 +153,32 @@ export function stripVendorPrefix(rawId: string): string {
 }
 
 /**
- * Same picker names dsh-our-free-model uses:
- * free lane → pretty catalog names (never a raw slug);
- * Kilo → `Kilo …` with org prefix and `(free)` stripped;
- * account channels → the model's own name, without the `provider/` routing prefix
- * (the Copilot vendor heading already names the platform).
+ * Bare ids that name a *tier*, not a model — `kilo-auto/free` and
+ * `openrouter/free` are two different free-pool routers whose identity lives
+ * entirely in the `org/` half. Dropping the prefix would render both as a bare
+ * `free` and leave two identical rows in the picker.
+ */
+const TIER_ONLY_BARE_IDS = new Set(['free']);
+
+/**
+ * Picker name: the model id exactly as upstream spells it — case, dots,
+ * hyphens and any `-free`/`:free` suffix included, without the `org/`
+ * routing prefix (the vendor heading already names the platform).
+ * Hub-provided names are ignored: they are derived from the id, and any
+ * rewrite (titleCase, slug prettifying) mangles version dots like `2.6`
+ * and breaks the copy-paste round trip.
+ *
+ * The prefix is kept only where dropping it would lose the model itself —
+ * `kilo-auto/free` and `openrouter/free` become `kilo-auto free` /
+ * `openrouter free`. Every other id keeps the short bare name; spelling out
+ * the vendor on all of them (`nvidia/nemotron-3.5-lightning:free`) only adds
+ * length the heading already implies.
  */
 export function displayNameOf(model: HubModel): string {
-	const platform = platformOf(model);
-	const given = typeof model.name === 'string' ? model.name.trim() : '';
-	const id = model.id;
-
-	if (platform.vendor === 'freehub-kilo') return kiloDisplayName(given, id);
-
-	if (platform.vendor === 'freehub-free' || platform.vendor === 'freehub-region') {
-		const known = FREE_DISPLAY_NAMES[id] ?? FREE_DISPLAY_NAMES[bareId(id)];
-		if (known !== undefined) return known;
-		if (isPrettyName(given, id)) return given;
-		return titleCase(bareId(id).replace(/-free$/i, ''));
-	}
-
-	if (isPrettyName(given, id)) return given;
-	return titleCase(bareId(id));
-}
-
-/** Human-facing names for the anonymous free lane, copied from dsh-our-free-model. */
-const FREE_DISPLAY_NAMES: Record<string, string> = {
-	'mimo-v2.6-flash-free': 'MiMo V2.6 Flash',
-	'mimo-v2.5-free': 'MiMo V2.5',
-	'muse-spark-1.3-contributor-free': 'Muse Spark 1.3',
-	'muse-spark-1.2-contributor-free': 'Muse Spark 1.2',
-	'nemotron-3-ultra-free': 'Nemotron 3 Ultra',
-	'nemotron-3.5-lightning-free': 'Nemotron 3.5 Lightning',
-	'ling-3.0-flash-fin-free': 'Ling 3.0 Flash Fin',
-	'space-bunny-free': 'Space Bunny',
-	'union-alpha': 'Union Alpha',
-	'deepseek-v4-flash-free': 'DeepSeek V4 Flash',
-	'jev-1.13-free': 'Jev 1.13',
-};
-
-function kiloDisplayName(given: string, id: string): string {
-	const raw = given !== '' ? given : id;
-	const stripped = raw
-		.replace(/^Kilo\s+/i, '')
-		.replace(/^[^:]{1,40}:\s+/, '')
-		.replace(/\s*\(free\)\s*$/i, '')
-		.trim();
-	const pretty = isPrettyName(stripped, id) ? stripped : titleCase(bareId(id).replace(/:free$/i, ''));
-	return `Kilo ${pretty}`;
-}
-
-/** True when `name` is already a picker label, not a routing id. */
-function isPrettyName(name: string, id: string): boolean {
-	if (name === '') return false;
-	if (name === id) return false;
-	if (name.includes('/')) return false;
-	if (/^[a-z0-9]+(?:[-_.:][a-z0-9]+)+$/.test(name)) return false;
-	return true;
+	const bare = bareId(model.id);
+	const org = idHead(model.id);
+	if (org !== '' && TIER_ONLY_BARE_IDS.has(bare.toLowerCase())) return `${org} ${bare}`;
+	return bare;
 }
 
 export function sortByPlatform(models: HubModel[]): HubModel[] {

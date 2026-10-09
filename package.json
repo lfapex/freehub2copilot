@@ -34,8 +34,8 @@
   "main": "./out/extension.js",
   "contributes": {
     "languageModelChatProviders": [
-      { "vendor": "freehub-free", "displayName": "Our Free Model" },
-      { "vendor": "freehub-region", "displayName": "Our Free Model · region-limited" },
+      { "vendor": "freehub-free", "displayName": "OpenCode" },
+      { "vendor": "freehub-region", "displayName": "OpenCode · region-limited" },
       { "vendor": "freehub-kilo", "displayName": "Kilo" },
       { "vendor": "freehub-atomcode", "displayName": "AtomCode" },
       { "vendor": "freehub-codearts", "displayName": "CodeArts Agent" },

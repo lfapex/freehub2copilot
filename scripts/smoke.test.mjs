@@ -51,10 +51,10 @@ test('readHubKeyFromDataDir degrades to empty on missing/corrupt files', () => {
 
 test('platformOf groups models the way dsh-our-free-model does', async () => {
   const { platformOf, displayNameOf, sortByPlatform, isPickerVisible, canonicalAtomcodeId, dedupeVisible } = await import('../out/platforms.js')
-  assert.equal(platformOf({ id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' }).label, 'Our Free Model')
+  assert.equal(platformOf({ id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' }).label, 'OpenCode')
   assert.equal(platformOf({ id: 'mimo-v2.6-flash-free' }).vendor, 'freehub-free')
-  assert.equal(platformOf({ id: 'muse-spark-1.3-contributor-free', regionSensitive: true }).label, 'Our Free Model')
-  assert.equal(platformOf({ id: 'muse-spark-1.3-contributor-free', state: 'region-blocked' }).label, 'Our Free Model · region-limited')
+  assert.equal(platformOf({ id: 'muse-spark-1.3-contributor-free', regionSensitive: true }).label, 'OpenCode')
+  assert.equal(platformOf({ id: 'muse-spark-1.3-contributor-free', state: 'region-blocked' }).label, 'OpenCode · region-limited')
   assert.equal(isPickerVisible({ id: 'mimo-v2.6-flash-free' }), true)
   assert.equal(isPickerVisible({ id: 'gone', state: 'unavailable' }), false)
   assert.equal(isPickerVisible({ id: 'gone', state: '不可用' }), false)
@@ -71,11 +71,15 @@ test('platformOf groups models the way dsh-our-free-model does', async () => {
     { id: 'atomcode/AtomGit-qwen3.8-27b', channel: 'atomcode', name: 'AtomGit-qwen3.8-27b' },
   ])
   assert.equal(atom.length, 1)
-  assert.equal(displayNameOf({ id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' }), 'MiMo V2.6 Flash')
-  assert.equal(displayNameOf({ id: 'mimo-v2.6-flash-free' }), 'MiMo V2.6 Flash')
-  assert.equal(displayNameOf({ id: 'codearts/deepseek-v4-flash', channel: 'chan', provider: 'codearts', name: 'deepseek-v4-flash' }), 'Deepseek V4 Flash')
-  assert.equal(displayNameOf({ id: 'zcode/GLM-5.3', channel: 'chan', provider: 'zcode', name: 'GLM 5.3' }), 'GLM 5.3')
-  assert.equal(displayNameOf({ id: 'nvidia/nemotron-3-ultra:free', channel: 'kilo', name: 'NVIDIA: Nemotron 3 Ultra (free)' }), 'Kilo Nemotron 3 Ultra')
+  assert.equal(displayNameOf({ id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' }), 'mimo-v2.6-flash-free')
+  assert.equal(displayNameOf({ id: 'mimo-v2.6-flash-free' }), 'mimo-v2.6-flash-free')
+  assert.equal(displayNameOf({ id: 'codearts/deepseek-v4-flash', channel: 'chan', provider: 'codearts', name: 'deepseek-v4-flash' }), 'deepseek-v4-flash')
+  assert.equal(displayNameOf({ id: 'zcode/GLM-5.3', channel: 'chan', provider: 'zcode', name: 'GLM 5.3' }), 'GLM-5.3')
+  assert.equal(displayNameOf({ id: 'nvidia/nemotron-3-ultra:free', channel: 'kilo', name: 'NVIDIA: Nemotron 3 Ultra (free)' }), 'nemotron-3-ultra:free')
+  // Two free-pool routers are named after their org; dropping it would leave
+  // two identical `free` rows. They keep the prefix, every other id does not.
+  assert.equal(displayNameOf({ id: 'kilo-auto/free', channel: 'kilo' }), 'kilo-auto free')
+  assert.equal(displayNameOf({ id: 'openrouter/free', channel: 'kilo' }), 'openrouter free')
   const sorted = sortByPlatform([
     { id: 'zcode/GLM-5.3', channel: 'chan', provider: 'zcode', name: 'GLM 5.3' },
     { id: 'mimo-v2.6-flash-free', name: 'MiMo V2.6 Flash' },
