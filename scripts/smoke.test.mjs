@@ -62,6 +62,17 @@ test('platformOf groups models the way dsh-our-free-model does', async () => {
   assert.equal(isPickerVisible({ id: 'dead', routable: false }), false)
   assert.equal(platformOf({ id: 'nvidia/nemotron-3-ultra:free', channel: 'kilo' }).label, 'Kilo')
   assert.equal(platformOf({ id: 'nvidia/nemotron-3-ultra:free', channel: 'kilo' }).vendor, 'freehub-kilo')
+  // Kilo's own id shapes, all lane-tagged by the hub regardless of spelling.
+  assert.equal(platformOf({ id: 'kilo-auto/free', ownedBy: 'kilo' }).vendor, 'freehub-kilo')
+  assert.equal(platformOf({ id: 'kilo-auto/off', channel: 'kilo' }).vendor, 'freehub-kilo')
+  assert.equal(platformOf({ id: 'openrouter/free', ownedBy: 'kilo' }).vendor, 'freehub-kilo')
+  // `:free` is Kilo's marker but NOT Kilo-exclusive — Cline's free tier serves
+  // `:free` and `cline-free/` ids under the chan lane, and those must keep
+  // their own vendor instead of being filed under Kilo.
+  assert.equal(platformOf({ id: 'cline/gpt-5.2:free', channel: 'chan', provider: 'cline', ownedBy: 'chan:cline' }).vendor, 'freehub-cline')
+  assert.equal(platformOf({ id: 'cline/cline-free/deepseek-v4.1-flash', ownedBy: 'chan:cline' }).vendor, 'freehub-cline')
+  assert.equal(platformOf({ id: 'codearts/GLM-5.3:free', channel: 'chan', provider: 'codearts', ownedBy: 'chan:codearts' }).vendor, 'freehub-codearts')
+  assert.equal(platformOf({ id: 'atomcode/glm-4.6:free', channel: 'atomcode' }).vendor, 'freehub-atomcode')
   assert.equal(platformOf({ id: 'zcode/GLM-5.3', channel: 'chan', provider: 'zcode' }).label, 'ZCode (智谱)')
   assert.equal(platformOf({ id: 'trae/kimi-k3', ownedBy: 'chan:trae' }).label, 'TRAE (字节)')
   assert.equal(platformOf({ id: 'atomcode/glm-4.6', channel: 'atomcode' }).label, 'AtomCode')

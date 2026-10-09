@@ -76,7 +76,14 @@ export function platformOf(model: HubModel): Platform {
 	const provider = (model.provider ?? '').trim();
 	const id = model.id;
 
-	if (channel === 'kilo' || owned === 'kilo' || isKiloId(id)) {
+	// Lanes are decided by the hub's own tags alone — never by id shape.
+	// `owned_by` is stamped `kilo` on every Kilo row however its id is spelled
+	// (`kilo-auto/free`, `openrouter/free`, `org/model:free`), so an id
+	// heuristic buys nothing and only misfires: `:free` is Kilo's marker but
+	// not Kilo-exclusive (Cline's free tier serves `:free` and `cline-free/`
+	// ids), and `openrouter/` is a real upstream namespace, not a Kilo one.
+	// Keep in step with `platformOf` in freehub2dsh.
+	if (channel === 'kilo' || owned === 'kilo') {
 		return { key: 'kilo', vendor: 'freehub-kilo', label: 'Kilo', order: 30 };
 	}
 	if (channel === 'atomcode' || owned === 'atomcode' || id.startsWith('atomcode/')) {
@@ -182,23 +189,18 @@ export function displayNameOf(model: HubModel): string {
 }
 
 export function sortByPlatform(models: HubModel[]): HubModel[] {
-	return [...models].sort((a, b) => {
-		const pa = platformOf(a);
-		const pb = platformOf(b);
-		if (pa.order !== pb.order) return pa.order - pb.order;
-		if (pa.label !== pb.label) return pa.label.localeCompare(pb.label, 'zh-CN');
-		return displayNameOf(a).localeCompare(displayNameOf(b), 'zh-CN');
+	const tagged = models.map(model => ({ model, platform: platformOf(model), name: displayNameOf(model) }));
+	tagged.sort((a, b) => {
+		if (a.platform.order !== b.platform.order) return a.platform.order - b.platform.order;
+		if (a.platform.label !== b.platform.label) return a.platform.label.localeCompare(b.platform.label, 'zh-CN');
+		return a.name.localeCompare(b.name, 'zh-CN');
 	});
+	return tagged.map(({ model }) => model);
 }
 
 function idHead(id: string): string {
 	const slash = id.indexOf('/');
 	return slash > 0 ? id.slice(0, slash) : '';
-}
-
-function isKiloId(id: string): boolean {
-	if (id.includes(':free') || id.startsWith('kilo-auto/') || id.startsWith('openrouter/')) return true;
-	return false;
 }
 
 function bareId(id: string): string {

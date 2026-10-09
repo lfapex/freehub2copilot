@@ -328,6 +328,7 @@ async function streamResponse(
 	};
 
 	let buffer = '';
+	let scanOffset = 0;
 	for await (const raw of upstream) {
 		if (token.isCancellationRequested) return;
 		if (!firstByte) {
@@ -336,9 +337,9 @@ async function streamResponse(
 		}
 		buffer += decoder.decode(raw, { stream: true });
 		let index: number;
-		while ((index = buffer.indexOf('\n')) !== -1) {
-			const line = buffer.slice(0, index).replace(/\r$/, '');
-			buffer = buffer.slice(index + 1);
+		while ((index = buffer.indexOf('\n', scanOffset)) !== -1) {
+			const line = buffer.slice(scanOffset, index).replace(/\r$/, '');
+			scanOffset = index + 1;
 			if (line === '' || line.startsWith(':')) continue;
 			if (!line.startsWith('data:')) continue;
 			const data = line.slice(5).trim();
@@ -395,6 +396,9 @@ async function streamResponse(
 			}
 			if (chunk.usage !== undefined) reportUsage(chunk.usage, progress);
 		}
+		// Trim consumed portion to prevent unbounded buffer growth
+		buffer = buffer.slice(scanOffset);
+		scanOffset = 0;
 	}
 	// Stream ended without [DONE]/finish_reason — flush anything accumulated.
 	if (!finishSeen) flushToolCalls();
